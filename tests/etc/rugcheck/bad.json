@@ -1,0 +1,28 @@
+{
+	"tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+	"tokenType": "",
+	"risks": [
+		{
+			"name": "High holder correlation",
+			"value": "(18)",
+			"description": "The top users hold similar supply amounts",
+			"score": 2800,
+			"level": "warn"
+		},
+		{
+			"name": "Low amount of LP Providers",
+			"value": "",
+			"description": "Only a few users are providing liquidity",
+			"score": 400,
+			"level": "warn"
+		},
+		{
+			"name": "Mutable metadata",
+			"value": "",
+			"description": "Token metadata can be changed by the owner",
+			"score": 100,
+			"level": "warn"
+		}
+	],
+	"score": 3300
+}

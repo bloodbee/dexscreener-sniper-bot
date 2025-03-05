@@ -1,0 +1,29 @@
+[
+    {
+        "baseToken": {"address": "0x123456", "symbol": "T1", "name": "Token 1"},
+        "chainId": "solana",
+        "priceUsd": "0.01256",
+        "volume": {"h24": "100000.50"},
+        "liquidity": {"usd": "500000.75"},
+        "fdv": "1000000.00",
+        "priceChange": {"h24": 1}
+    },
+    {
+        "baseToken": {"address": "0x789123", "symbol": "T2", "name": "Token 2"},
+        "chainId": "solana",
+        "priceUsd": "10.56",
+        "volume": {"h24": "100000.50"},
+        "liquidity": {"usd": "500000.75"},
+        "fdv": "1000000.00",
+        "priceChange": {"h24": 1}
+    },
+    {
+        "baseToken": {"address": "0x123789", "symbol": "T3", "name": "Token 3"},
+        "chainId": "solana",
+        "priceUsd": "1.53",
+        "volume": {"h24": "100000.50"},
+        "liquidity": {"usd": "500000.75"},
+        "fdv": "1000000.00",
+        "priceChange": {"h24": 1}
+    }
+]
