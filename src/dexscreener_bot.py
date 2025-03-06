@@ -83,7 +83,7 @@ class DexScreenerBot:
     async def stop(self):
         """Stop the bot gracefully"""
         self.running = False
-        self.client.stop()
+        await self.client.stop()
         await self.send_telegram_notification("DexScreenerBot stopped.")
         logging.info("DexScreenerBot stopped.")
         self.__exit()
