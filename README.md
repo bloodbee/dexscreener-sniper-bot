@@ -6,7 +6,7 @@ It aims to provide users with a competitive edge by executing trades faster than
 
 ## Features
 
-- **Automated Trading**: Automatically buy tokens using [https://pumpportal.fun/](https://pumpportal.fun/).
+- **Automated Trading**: Automatically buy tokens using [ToxiBot](https://toxi-sol.gitbook.io/toxi).
 - **Configurable Settings**: Customize the bot's behavior to suit your trading strategy.
 - **Verify rugcheck**: Use [rugcheck](https://rugcheck.xyz/) to prevent buying high probability rugcheck tokens.
 - **Detect fake volule**: Automatically detect fake volume.
@@ -43,30 +43,26 @@ Tokens that meet the requirements, with high volume and liquidity are considered
 
 ## Usage
 
-1. Go to [PumpPortal](https://pumpportal.fun/trading-api/setup) to create a new wallet, save the differents keys.
+1. Go to the Toxi Bot telegram channel: https://t.me/toxi_solana_bot
 
-2. Send some SOL to the newly created wallet (using the public key).
+2. Follow the instructions to generate a new wallet and deposit SOL into it.
 
-3. Go to [Telegram BotFather](https://telegram.me/BotFather) and follows the instructions to create a new telegram bot.
+3. Go to [My Telegram](https://my.telegram.org/) and create a new application. Save the *APP ID* and the *APP HASH* values.
+
+4. Go to [Telegram BotFather](https://telegram.me/BotFather) and follows the instructions to create a new telegram bot.
 You will need the *bot token*.
 
-4. Use the [get chat id script](scripts/get_tg_bot_chat_id.py) to get the chat id to where the reports will be send:
+5. Use the [get chat id script](scripts/get_tg_bot_chat_id.py) to get the chat id to where the reports will be send:
     ```bash
     python scripts/get_tg_bot_chat_id.py
     ```
 
-5. Copy `config.json.sample` into `config.json` file, update the configuration to suit your needs.
+6. Copy `config.json.sample` into `config.json` file, update the configuration to suit your needs.
 
-6. Start the bot:
+7. Start the bot:
     ```bash
     python main.py
     ```
-
-## Limitations
-
-I am using PUMPPORTAL (https://pumpportal.fun/trading-api/setup), but the fees are high (1% for pumpportal + pump.fun fees).
-
-If you want to implement buy and send transactions with Solana, you're welcome!
 
 ## Contributing
 

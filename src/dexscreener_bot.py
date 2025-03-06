@@ -18,6 +18,7 @@ from solders.pubkey import Pubkey
 
 from .database import Database
 from .models.token import Token
+from .toxi_bot_client import ToxiBotClient
 
 # Set up logging
 logging.basicConfig(
@@ -42,37 +43,47 @@ class DexScreenerBot:
         self.dexscreener_url = self.config["api_settings"]["dexscreener_api_url"]
         self.rugcheck_url = self.config["api_settings"]["rugcheck_url"]
         self.request_delay = self.config["api_settings"]["request_delay"]
-        self.pumpportal_api_key = self.config["api_settings"]["pump_portal_api_key"]
-        self.solana_client = Client(self.config["api_settings"]["solana_rpc_url"])
-        self.wallet_pubkey = Pubkey.from_string(
-            self.config["api_settings"]["solana_wallet_public_key"]
-        ) if "solana_wallet_public_key" in self.config["api_settings"] else None
         # telegram settings
         self.telegram_bot = Bot(self.config["telegram_settings"]["telegram_bot_token"])
         self.chat_id = self.config["telegram_settings"]["telegram_chat_id"]
         # transaction settings
-        self.slippage = self.config["transaction_settings"].get("slippage", 5)
         self.amount_sol = self.config["transaction_settings"].get("amountInSol", 0.05)
-        self.amount_token = self.config["transaction_settings"].get("amountInToken", 100)
-        self.min_sol_balance = self.config["transaction_settings"].get("minSolBalance", 0.1)
+        self.amount_token = self.config["transaction_settings"].get(
+            "amountInToken", 100
+        )
         self.session = None  # Will be initialized in run()
+
+        # trading client
+        self.client = ToxiBotClient(
+            api_id=self.config["toxi_bot_settings"]["telegram_api_id"],
+            api_hash=self.config["toxi_bot_settings"]["telegram_api_hash"],
+            phone_number=self.config["toxi_bot_settings"]["telegram_phone_number"],
+        )
 
     async def run(self):
         """Main bot execution loop with dynamic token fetching"""
         self.running = True
         async with aiohttp.ClientSession() as session:
+            # set aiohttp session
             self.session = session
+
+            # set toxi bot client
+            await self.client.setup()
+            await self.client.connect()
+
             await self.send_telegram_notification(
                 "DexScreenerBot started and will run every minute."
             )
             logging.info("DexScreenerBot started and will run every minute.")
 
+            # run
             while self.running:
                 await self.__process_tokens()
 
     async def stop(self):
         """Stop the bot gracefully"""
         self.running = False
+        self.client.stop()
         await self.send_telegram_notification("DexScreenerBot stopped.")
         logging.info("DexScreenerBot stopped.")
         self.__exit()
@@ -152,7 +163,7 @@ class DexScreenerBot:
                     "High holder correlation",
                     "Mutable metadata",
                     "Symbol Mismatch",
-                    "Name Mismatch"
+                    "Name Mismatch",
                 }
 
                 # Check for dealbreaker risks
@@ -229,20 +240,7 @@ class DexScreenerBot:
         with open("config.json", "w") as f:
             json.dump(self.config, f, indent=4)
 
-    def __get_solana_balance(self) -> float:
-        """Check the SOL balance of the configured wallet"""
-        try:
-            if not self.wallet_pubkey:
-                return 0.0
-            balance_lamports = self.solana_client.get_balance(self.wallet_pubkey).value
-            balance_sol = balance_lamports / 1_000_000_000  # Convert lamports to SOL
-            logging.info(f"Current SOL balance: {balance_sol} SOL")
-            return balance_sol
-        except Exception as e:
-            logging.error(f"Error fetching Solana balance: {e}")
-            return 0.0
-
-    async def __trade_with_pumpportal(
+    async def __trade_with_toxi_bot(
         self, token: Token, action: str, amount: float
     ) -> bool:
         try:
@@ -250,49 +248,25 @@ class DexScreenerBot:
                 f"{action.upper()} token {token.address} with status {token.status} ..."
             )
 
-            transaction_amount = amount if action == "buy" else f"{amount}%"
-            denominated_in_sol = "true" if action == "buy" else "false"
-            url = f"https://pumpportal.fun/api/trade?api-key={self.pumpportal_api_key}"
+            response = await self.client.send_buy_command(token.address, amount)
 
-            balance = self.__get_solana_balance()
-            if (action == "buy" and balance < amount) or (
-                action == "sell" and balance < self.min_sol_balance
-            ):
-                logging.warning(
-                    f"Insufficient SOL balance ({balance} SOL) for {action} of {amount} SOL on {token.address}"  # noqa: E501
-                )
-                await self.send_telegram_notification(
-                    f"Trade failed: Insufficient SOL balance ({balance} SOL) for {action} of {amount} SOL on {token.address}"  # noqa: E501
+            print("RES", response)
+
+            if "errors" in response and response["errors"]:
+                logging.error(
+                    f"{action.capitalize()} transaction failed for token {token.address}: {response['errors']}"  # noqa: E501
                 )
                 return False
 
-            async with self.session.post(
-                url=url,
-                data={
-                    "action": action,
-                    "mint": token.address,
-                    "amount": transaction_amount,
-                    "denominatedInSol": denominated_in_sol,
-                    "slippage": self.slippage,
-                    "priorityFee": 0.0001,
-                    "pool": token.dex_id,
-                },
-            ) as response:
-                data = await response.json()
-                if "errors" in data and data["errors"]:
-                    logging.error(
-                        f"{action.capitalize()} transaction failed for token {token.address}: {data['errors']}"  # noqa: E501
-                    )
-                    return False
-
-                logging.info(
-                    f"Transaction {action.upper()} successful for token {token.address}"
-                )
-                await self.send_telegram_notification(
-                    f"{action.capitalize()} command sent for {token.symbol}"
-                )
-                return True
+            logging.info(
+                f"Transaction {action.upper()} successful for token {token.address}"
+            )
+            await self.send_telegram_notification(
+                f"{action.capitalize()} command sent for {token.symbol}"
+            )
+            return True
         except Exception as e:
+            print(traceback.format_exc())
             logging.error(
                 f"{action.capitalize()} transaction failed for token {token.address}: {e}"
             )
@@ -319,12 +293,12 @@ class DexScreenerBot:
 
         if price_change_24h > 100:
             token.status = "pumped"
-            await self.__trade_with_pumpportal(token, "buy", self.amount_sol)
+            await self.__trade_with_toxi_bot(token, "buy", self.amount_sol)
         elif price_change_24h < -90 and token.liquidity < 1000:
             token.status = "rugged"
         elif token.volume_24h > 1000000 and token.liquidity > 250000:
             token.status = "tier1"
-            await self.__trade_with_pumpportal(token, "buy", self.amount_sol)
+            await self.__trade_with_toxi_bot(token, "buy", self.amount_sol)
         else:
             token.status = "dead"
 

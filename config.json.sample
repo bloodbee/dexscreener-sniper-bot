@@ -15,19 +15,19 @@
         "dexscreener_api_url": "https://api.dexscreener.com",
         "request_delay": 10,
         "rugcheck_url": "https://api.rugcheck.xyz/v1/tokens",
-        "pump_portal_api_key": "YOUR_PUMPPORTAL_API_KEY",
-        "solana_rpc_url": "SOLANA_RPC_URL",
-        "solana_wallet_public_key": "YOUR_SOLANA_PUBLIC_WALLET"
     },
     "telegram_settings": {
         "telegram_bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
         "telegram_chat_id": "YOUR_TELEGRAM_CHAT_ID"
     },
+    "toxi_bot_settings": {
+        "telegram_api_id": "YOUR_TELEGRAM_API_ID",
+        "telegram_api_hash": "YOUR_TELEGRAM_API_HASH",
+        "telegram_phone_number": "YOUR_PHONE_NUMBER_USED_ON_TELEGRAM",
+    },
     "transaction_settings": {
-        "slippage": 5,
         "amountInSol": 0.05,
-        "amountInToken": 100,
-        "minSolBalance": 0.1
+        "amountInToken": 100
     },
     "fake_volume_detection": {
         "repetitive_trade_threshold": 0.9,

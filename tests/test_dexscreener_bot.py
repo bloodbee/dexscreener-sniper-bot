@@ -16,18 +16,19 @@ def mock_config():
             "dexscreener_api_url": "https://api.dexscreener.com",
             "rugcheck_url": "https://api.rugcheck.xyz",
             "request_delay": 1,
-            "solana_rpc_url": "https://api.devnet.solana.com",
-            "pump_portal_api_key": "test_api_key",
         },
         "telegram_settings": {
             "telegram_bot_token": "test_bot_token",
             "telegram_chat_id": "test_chat_id",
         },
+        "toxi_bot_settings": {
+            "telegram_api_id": "11111111",
+            "telegram_api_hash": "xxxxxxxxx",
+            "telegram_phone_number": "+011212121212"
+        },
         "transaction_settings": {
-            "slippage": 1.0,
             "amountInSol": 0.1,
-            "amountInToken": 100,
-            "minSolBalance": 0.1
+            "amountInToken": 100
         },
         "filters": {
             "min_liquidity": 5000,
@@ -147,31 +148,6 @@ class TestDexScreenerBot:
         await bot.send_telegram_notification("Test message")
         bot.telegram_bot.send_message.assert_called_once()
         assert bot.telegram_bot.send_message.call_args[1]["text"] == "Test message"
-
-    @pytest.mark.asyncio
-    async def test_trade_with_pumpportal_buy(self, bot, mock_token):
-        with patch.object(
-            bot,
-            "_DexScreenerBot__get_solana_balance",
-            return_value=0.1,
-        ):
-            with aioresponses() as m:
-
-                # buy
-                url = "https://pumpportal.fun/api/trade?api-key=test_api_key"
-                m.post(url, payload={})
-                result = await bot._DexScreenerBot__trade_with_pumpportal(
-                    mock_token, "buy", 0.1
-                )
-                assert result is True
-
-                # sell
-                url = "https://pumpportal.fun/api/trade?api-key=test_api_key"
-                m.post(url, payload={})
-                result = await bot._DexScreenerBot__trade_with_pumpportal(
-                    mock_token, "sell", 50.0
-                )
-                assert result is True
 
     def test_load_config_valid_file(self, mock_config):
         with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
